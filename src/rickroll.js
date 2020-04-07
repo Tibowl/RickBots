@@ -19,38 +19,46 @@ async function rickRoll(clients) {
     if(isPlayingSong || linesPlaying > 0) return
     isPlayingSong = true
 
-    const voiceClients = await Promise.all(clients.map(client => client.voice.joinChannel(client.channels.get(voiceChannelID))))
+    try {
+        const vc = clients.map(client => client.voice.joinChannel(client.channels.get(voiceChannelID)))
+        const voiceClients = await Promise.all(vc)
 
-    Logger.info("----- starting -----")
-    let totalDuration = 0
-    for (const {text, duration, id} of lyrics) {
-        const clientID = clients.findIndex(k => text.startsWith(k.user.username))
+        Logger.info("----- starting -----")
+        let totalDuration = 0
+        for (const {text, duration, id} of lyrics) {
+            const clientID = clients.findIndex(k => text.startsWith(k.user.username))
 
-        if(duration == null) continue
+            if(duration == null) continue
+
+            setTimeout(() => {
+                if(clientID >= 0) {
+                    const client = clients[clientID]
+
+                    Logger.info(`${client.user.username}: ${text} (${duration}) playing #${id}`)
+
+                    if(id != undefined)
+                        voiceClients[clientID].playFile(`./data/song/${id}.mp3`, {seek: 0, passes: 4})
+
+                    client.channels.get(textChannelID).send(text.substring(client.user.username.length))
+                } else if (id != undefined) {
+                    Logger.info(`Misc bot: ${duration} #${id}`)
+                    voiceClients[0].playFile(`./data/song/${id}.mp3`, {seek: 0, passes: 4})
+                }
+            }, totalDuration)
+
+            totalDuration += duration
+        }
 
         setTimeout(() => {
-            if(clientID >= 0) {
-                const client = clients[clientID]
+            voiceClients.forEach(c => c.disconnect())
+            isPlayingSong = false
+        }, totalDuration + 1000)
+    } catch (error) {
+        Logger.error(error)
 
-                Logger.info(`${client.user.username}: ${text} (${duration}) playing #${id}`)
-
-                if(id != undefined)
-                    voiceClients[clientID].playFile(`./data/song/${id}.mp3`, {seek: 0, passes: 4})
-
-                client.channels.get(textChannelID).send(text.substring(client.user.username.length))
-            } else if (id != undefined) {
-                Logger.info(`Misc bot: ${duration} #${id}`)
-                voiceClients[0].playFile(`./data/song/${id}.mp3`, {seek: 0, passes: 4})
-            }
-        }, totalDuration)
-
-        totalDuration += duration
-    }
-
-    setTimeout(() => {
-        voiceClients.forEach(c => c.disconnect())
+        // eslint-disable-next-line require-atomic-updates
         isPlayingSong = false
-    }, totalDuration + 1000)
+    }
 }
 
 /**
@@ -101,13 +109,18 @@ async function handleMessage(clients, message) {
     Logger.info(`${message.author.tag}: ${message.content} -> ${lineID} by ${clientID}`)
 
     linesPlaying++
-    const client = clients[clientID]
-    const voice = await client.voice.joinChannel(client.channels.get(voiceChannelID))
-    voice.playFile(`./data/song/${lineID}.mp3`, {seek: 0, passes: 4})
+    try {
+        const client = clients[clientID]
+        const voice = await client.voice.joinChannel(client.channels.get(voiceChannelID))
+        voice.playFile(`./data/song/${lineID}.mp3`, {seek: 0, passes: 4})
 
-    setTimeout(() => {
+        setTimeout(() => {
+            linesPlaying--
+            voice.disconnect()
+        }, line.duration + 1000)
+    } catch (error) {
+        Logger.error(error)
         linesPlaying--
-        voice.disconnect()
-    }, line.duration + 1000)
+    }
 }
 module.exports = { rickRoll, handleMessage, checkClient }
