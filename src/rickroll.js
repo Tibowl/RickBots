@@ -9,15 +9,15 @@ const textChannelID  = "696453417278898248"
 const voiceChannelID = "694925534798282943"
 const lyrics         = JSON.parse(fs.readFileSync("./data/song.json").toString())
 
-let isPlaying = false
+let isPlayingSong = false, linesPlaying = 0
 /**
  *  Start the rick roll
  *
  * @param {Discord.Client[]} clients List of logged in clients
  */
 async function rickRoll(clients) {
-    if(isPlaying) return
-    isPlaying = true
+    if(isPlayingSong || linesPlaying > 0) return
+    isPlayingSong = true
 
     const voiceClients = await Promise.all(clients.map(client => client.voice.joinChannel(client.channels.get(voiceChannelID))))
 
@@ -49,7 +49,7 @@ async function rickRoll(clients) {
 
     setTimeout(() => {
         voiceClients.forEach(c => c.disconnect())
-        isPlaying = false
+        isPlayingSong = false
     }, totalDuration + 1000)
 }
 
@@ -92,7 +92,7 @@ async function handleMessage(clients, message) {
     }
 
     const lineID = lyrics.findIndex(l => l.text == message.content)
-    if(lineID < 0 || isPlaying || message.content == "") return
+    if(lineID < 0 || isPlayingSong || message.content == "") return
     const line = lyrics[lineID]
 
     const clientID = clients.findIndex(k => line.text.startsWith(k.user.username))
@@ -100,14 +100,14 @@ async function handleMessage(clients, message) {
 
     Logger.info(`${message.author.tag}: ${message.content} -> ${lineID} by ${clientID}`)
 
-    isPlaying = true
+    linesPlaying++
     const client = clients[clientID]
     const voice = await client.voice.joinChannel(client.channels.get(voiceChannelID))
     voice.playFile(`./data/song/${lineID}.mp3`, {seek: 0, passes: 4})
 
     setTimeout(() => {
+        linesPlaying--
         voice.disconnect()
-        isPlaying = false
     }, line.duration + 1000)
 }
 module.exports = { rickRoll, handleMessage, checkClient }
