@@ -7,6 +7,14 @@ const Logger = log4js.getLogger("rickroll")
 
 const textChannelID  = "696453417278898248"
 const voiceChannelID = "694925534798282943"
+/** A line of song
+ *
+ * @typedef SongLine
+ * @property {string} text Line, can be empty
+ * @property {number} duration Duration in ms
+ * @property {string | number} [id] Optional mp3 file that is played
+ */
+/** @type SongLine[] */
 const lyrics         = JSON.parse(fs.readFileSync("./data/song.json").toString())
 
 let isPlayingSong = false, linesPlaying = 0
