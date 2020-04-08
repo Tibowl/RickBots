@@ -15,12 +15,12 @@ let isPlayingSong = false, linesPlaying = 0
  *
  * @param {Discord.Client[]} clients List of logged in clients
  */
-async function rickRoll(clients) {
+async function rickRoll(clients, channel = voiceChannelID) {
     if(isPlayingSong || linesPlaying > 0) return
     isPlayingSong = true
 
     try {
-        const vc = clients.map(client => client.voice.joinChannel(client.channels.get(voiceChannelID)))
+        const vc = clients.map(client => client.voice.joinChannel(client.channels.get(channel)))
         const voiceClients = await Promise.all(vc)
 
         Logger.info("----- starting -----")
@@ -81,9 +81,13 @@ async function checkClient(client) {
  * @param {Discord.Message} message Message to check
  */
 async function handleMessage(clients, message) {
+    let channel = voiceChannelID
+    if(message.member.voiceChannelID)
+        channel = message.member.voiceChannelID
+
     if(message.content == "never gonna give you up") {
         Logger.info(`${message.author.tag}: ${message.content}`)
-        return rickRoll(clients)
+        return rickRoll(clients, channel)
     }
 
     if(message.content == "never gonna shutdown") {
@@ -111,7 +115,7 @@ async function handleMessage(clients, message) {
     linesPlaying++
     try {
         const client = clients[clientID]
-        const voice = await client.voice.joinChannel(client.channels.get(voiceChannelID))
+        const voice = await client.voice.joinChannel(client.channels.get(channel))
         voice.playFile(`./data/song/${lineID}.mp3`, {seek: 0, passes: 4})
 
         setTimeout(() => {
