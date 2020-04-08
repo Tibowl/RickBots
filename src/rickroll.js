@@ -82,7 +82,7 @@ async function checkClient(client) {
  */
 async function handleMessage(clients, message) {
     let channel = voiceChannelID
-    if(message.member.voiceChannelID)
+    if(message.member && message.member.voiceChannelID)
         channel = message.member.voiceChannelID
 
     if(message.content == "never gonna give you up") {
