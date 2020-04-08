@@ -14,6 +14,7 @@ let isPlayingSong = false, linesPlaying = 0
  *  Start the rick roll
  *
  * @param {Discord.Client[]} clients List of logged in clients
+ * @param {string} [channel] Channel ID to play in
  */
 async function rickRoll(clients, channel = voiceChannelID) {
     if(isPlayingSong || linesPlaying > 0) return

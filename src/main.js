@@ -20,6 +20,7 @@ if(!fs.existsSync("./data/config.json")) {
 
 global.config = require("./data/config.json")
 
+/** @type{Discord.Client[]} */
 const clients = []
 
 const { handleMessage, checkClient } = require("./rickroll")
