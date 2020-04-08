@@ -90,7 +90,7 @@ async function handleMessage(clients, message) {
         return rickRoll(clients, channel)
     }
 
-    if(message.content == "never gonna shutdown") {
+    if(message.content == "never gonna shutdown" && message.author.id == "127393188729192448") {
         Logger.info(`${message.author.tag}: ${message.content}`)
         clients.forEach(client =>
             setTimeout(() => {
