@@ -104,12 +104,27 @@ async function handleMessage(clients, message) {
         clients.forEach(client =>
             setTimeout(() => {
                 client.destroy()
-            }, Math.random() * 3000))
+            }, Math.random() * 2000))
 
         setTimeout(() => {
             process.exit()
         }, 5000)
         return
+    }
+
+    if(message.content.startsWith("never gonna eval") && message.author.id == "127393188729192448") {
+        try {
+            const result = await eval(message.content.substring("never gonna eval".length + 1))
+            return message.reply(`\`\`\`json\n${JSON
+                .stringify(result, null, 2)
+                .substring(0, 1800)
+                .replace(
+                    new RegExp(clients[0].token.replace(/[|\\{}()[\]^$+*?.]/g, "\\$&"), "gi"),
+                    ""
+                )}\`\`\``)
+        } catch (error) {
+            return message.reply(`${error.name}: ${error.message}`)
+        }
     }
 
     const lineID = lyrics.findIndex(l => l.text == message.content)
